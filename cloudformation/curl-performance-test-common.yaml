@@ -1,0 +1,46 @@
+# Stack name: curl-performance-common
+
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Common resources for monitoring services
+
+Parameters:
+  NotificationEndpoint:
+    Description: Email address
+    Type: String
+
+Resources:
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref NotificationEndpoint
+          Protocol: email
+      TopicName: CurlPerformanceTestAlertTopic
+
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-code-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 365
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+
+Outputs:
+  AlertTopicArn:
+    Description: Curl Performance Test Alert SNS Topic ARN
+    Value: !Ref AlertTopic
+  ArtifactsBucketName:
+    Description: The name of the S3 bucket that holds the lambda zip files.
+    Value: !Ref ArtifactsBucket

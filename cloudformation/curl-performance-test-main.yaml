@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Lambda function for getting http performance timing data of a given url with curl
+
+Parameters:
+  ArtifactsBucketName:
+    Description: The name of the S3 bucket that holds the lambda zip file.
+    Type: String
+  CloudWatchCustomMetricNamespace:
+    Description: The name of the CloudWatch Custom Metric Namespace.
+    Type: String
+  LambdaFunctionName:
+    Description: The name of the lambda function.
+    Type: String
+  LambdaPackageS3Key:
+    Description: The path/name of the lambda zip file in the bucket.
+    Type: String
+  ScheduleExpression:
+    Description: The name for this canary
+    Type: String
+    Default: rate(15 minutes)
+  SubnetId1:
+    Description: VPC subnet ID
+    Type: AWS::EC2::Subnet::Id
+  SubnetId2:
+    Description: VPC subnet ID
+    Type: AWS::EC2::Subnet::Id
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+
+Resources:
+  CurlPerformanceTestLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${LambdaFunctionName}
+      RetentionInDays: 90
+
+  CurlPerformanceTestFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: !Sub ${AWS::StackName}-ExecutionRolePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                Resource:
+                  - '*'
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactsBucketName}
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactsBucketName}/*
+      RoleName: !Sub ${AWS::StackName}-${AWS::Region}-ExecutionRole
+
+  CurlPerformanceTestFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: CurlPerformanceTestLogGroup
+    Properties:
+      Code:
+        S3Bucket: !Ref ArtifactsBucketName
+        S3Key: !Ref LambdaPackageS3Key
+      FunctionName: !Ref LambdaFunctionName
+      Handler: curl_performance_test.lambda_handler
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref ArtifactsBucketName
+          METRIC_NAMESPACE: !Ref CloudWatchCustomMetricNamespace
+      MemorySize: 1024
+      Role: !GetAtt CurlPerformanceTestFunctionExecutionRole.Arn
+      Runtime: python3.7
+      Timeout: 900
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref CurlPerformanceTestFunctionSG
+        SubnetIds:
+          - !Ref SubnetId1
+          - !Ref SubnetId2
+
+  CurlPerformanceTestFunctionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub SG of Lambda ${LambdaFunctionName}
+      VpcId: !Ref VpcId
+
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: !Sub Invoke ${LambdaFunctionName} lambda function ${ScheduleExpression}
+      ScheduleExpression: !Ref ScheduleExpression
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt CurlPerformanceTestFunction.Arn
+          Id: !Sub ${AWS::StackName}-ScheduledRuleTarget
+
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CurlPerformanceTestFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScheduledRule.Arn

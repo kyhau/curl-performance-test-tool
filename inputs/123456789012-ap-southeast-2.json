@@ -1,0 +1,14 @@
+{
+  "duckduckgo_com": {
+    "Url": "https://duckduckgo.com"
+  },
+  "github_com": {
+    "Url": "https://github.com"
+  },
+  "google_com": {
+    "Url": "https://google.com"
+  },
+  "test_not_exist_com": {
+    "Url": "https://test-not-exist.com"
+  }
+}

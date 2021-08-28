@@ -1,0 +1,48 @@
+name: upload-input-files-to-s3
+
+# on:
+#   push:
+#     branches:
+#       - master
+#     paths:
+#       - .github/workflows/upload-input-files-to-s3.yaml
+#       - inputs/*
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy-curl-performance-test:
+    name: Deploy curl performance test
+    runs-on: [self-hosted, linux, python3]
+    env:
+      AWS_REGION: ap-southeast-2
+      AWS_ROLE_SESSION_NAME: GitHubActions
+      region: ap-southeast-2
+    strategy:
+      matrix:
+        accountid: ["123456789012"]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.region }}
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+          role-to-assume: arn:aws:iam::${{ env.accountid }}:role/k-ci-deploy
+
+      - name: Upload URL lists to S3
+        run: |
+          BUCKET_NAME=curl-performance-test-common-code-${{ env.accountid }}-${{ env.region }}
+          aws s3 cp --region ${{ env.region }} ./inputs/${{ env.accountid }}-${{ env.region }}.json s3://$BUCKET_NAME/inputs/
+
+      - name: Deploy CloudWatch Dashboard
+        run: |
+          python3.8 -m venv env
+          source env/bin/activate
+          pip install -r scripts/requirements.txt
+          python3 scripts/deploy_dashboard.py -n CurlPerformance -f ./inputs/${{ env.accountid }}-${{ env.region }}.json -r ${{ env.region }}
+          deactivate
