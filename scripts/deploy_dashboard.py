@@ -47,7 +47,12 @@ def new_line_widget(x, y, height, width, region, dimension_ids, metric_index, me
             "view": "timeSeries",
             "stacked": False,
             "metrics": metrics,
-            "region": region
+            "region": region,
+            "yAxis": {
+                "left": {
+                    "min": 0
+                }
+            }
         }
     }
 

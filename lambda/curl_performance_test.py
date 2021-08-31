@@ -49,17 +49,14 @@ INPUT_DATASET = read_from_s3(BUCKET_NAME)
 
 
 def call_curl(url):
-    args = ["curl", "-sSo", "/dev/null", "-k", "-w", CURL_W_FORMAT, url]
+    args = ["curl", "-sSo", "/dev/null", "-k", "-m", "10", "-w", CURL_W_FORMAT, url]
 
     try:
         output = subprocess.check_output(args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as err:
         fail_lines = filter(lambda x: x.startswith("curl"), err.output.decode("utf-8").splitlines())
         logging.error(", ".join(fail_lines))
-        if err.returncode == 6:
-            # Could not resolve host
-            return err.returncode, {}
-        raise
+        return err.returncode, {}
 
     vars = dict(zip(CURL_VARS, output.decode("ascii").splitlines()))
     last_metric = 0
