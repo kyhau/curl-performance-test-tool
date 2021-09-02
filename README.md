@@ -19,6 +19,8 @@ The [deploy-curl-performance-test-master](https://github.com/kyhau/curl-performa
     8. Failed (unit: None)
 - Produce a CloudWatch Dashboard named `CurlPerformance`.
 
+![CloudWatchDashboard-01](doc/CloudWatchDashboard-01.png)
+
 ### Specifying URLs to be tested
 
 - The [upload-input-files-to-s3](https://github.com/kyhau/curl-performance-test-tool/actions/workflows/upload-input-files-to-s3.yaml) workflow uploads the URL input files in [inputs/](inputs/) to a S3 bucket which is read by the Lambda Function.
