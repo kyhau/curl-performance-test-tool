@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run yamllint
-        run: yamllint -c ./.github/linters/.yaml-lint.yaml .github cloudformation
+        run: yamllint -c ./.github/linters/.yaml-lint.yaml .github/ cloudformation/
 
   deploy-curl-performance-test:
     name: Deploy curl performance test
@@ -72,7 +72,7 @@ jobs:
           name: curl-performance-test-common
           no-fail-on-empty-changeset: 1
           parameter-overrides: >-
-            NotificationURL=TODO-EMAIL-ADDRESS
+            NotificationURL=
           template: ./cloudformation/curl-performance-test-common.yaml
 
       - name: Upload URL lists to S3
