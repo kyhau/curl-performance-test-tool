@@ -9,9 +9,13 @@ Parameters:
     Description: Email address
     Type: String
 
+Conditions:
+  NotificationEnabled: !Not [!Equals [!Ref NotificationEndpoint, '']]
+
 Resources:
   AlertTopic:
     Type: AWS::SNS::Topic
+    Condition: NotificationEnabled
     Properties:
       Subscription:
         - Endpoint: !Ref NotificationEndpoint
@@ -39,6 +43,7 @@ Resources:
 
 Outputs:
   AlertTopicArn:
+    Condition: NotificationEnabled
     Description: Curl Performance Test Alert SNS Topic ARN
     Value: !Ref AlertTopic
   ArtifactsBucketName:

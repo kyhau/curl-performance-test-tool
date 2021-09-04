@@ -20,14 +20,17 @@ Parameters:
     Type: String
     Default: rate(15 minutes)
   SubnetId1:
-    Description: VPC subnet ID
+    Description: VPC subnet ID (Required if VpcId specified)
     Type: AWS::EC2::Subnet::Id
   SubnetId2:
-    Description: VPC subnet ID
+    Description: VPC subnet ID (Required if VpcId specified)
     Type: AWS::EC2::Subnet::Id
   VpcId:
-    Description: VPC ID
+    Description: VPC ID (Optional)
     Type: AWS::EC2::VPC::Id
+
+Conditions:
+  VpcModeEnabled: !Not [!Equals [!Ref VpcId, '']]
 
 Resources:
   CurlPerformanceTestLogGroup:
@@ -89,14 +92,11 @@ Resources:
       Runtime: python3.7
       Timeout: 900
       VpcConfig:
-        SecurityGroupIds:
-          - !Ref CurlPerformanceTestFunctionSG
-        SubnetIds:
-          - !Ref SubnetId1
-          - !Ref SubnetId2
+        !If [VpcModeEnabled, {SecurityGroupIds: [!Ref CurlPerformanceTestFunctionSG], SubnetIds: [!Ref SubnetId1, !Ref SubnetId2]}, !Ref AWS::NoValue]
 
   CurlPerformanceTestFunctionSG:
     Type: AWS::EC2::SecurityGroup
+    Condition: VpcModeEnabled
     Properties:
       GroupDescription: !Sub SG of Lambda ${LambdaFunctionName}
       VpcId: !Ref VpcId
