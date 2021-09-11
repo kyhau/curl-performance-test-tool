@@ -5,6 +5,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Common resources for monitoring services
 
 Parameters:
+  BucketName:
+    Description: Name of the artifacts bucket to be created
+    Type: String
   NotificationEndpoint:
     Description: Email address
     Type: String
@@ -26,7 +29,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
-      BucketName: !Sub ${AWS::StackName}-code-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Ref BucketName
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
