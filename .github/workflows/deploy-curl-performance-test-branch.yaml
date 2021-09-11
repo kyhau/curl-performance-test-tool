@@ -86,6 +86,7 @@ jobs:
 
       - name: Upload URL lists to S3
         run: |
+          cp ./inputs/123456789012-${{ env.region }}.json ./inputs/${{ env.accountid }}-${{ env.region }}.json
           aws s3 cp ./inputs/${{ env.accountid }}-${{ env.region }}.json s3://${{ steps.Bucket.outputs.name }}/inputs/ --region ${{ env.region }}
 
       - name: Package and upload Lambda Function
