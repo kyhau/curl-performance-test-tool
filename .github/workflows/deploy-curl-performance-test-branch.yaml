@@ -117,9 +117,9 @@ jobs:
           # VpcId=${{ steps.VpcInfo.outputs.vpcid }}
           template: ./cloudformation/curl-performance-test-main.yaml
 
-      - name: Deploy CloudWatch Dashboard
+      - name: Deploy CloudWatch Dashboard CurlPerformance
         run: |
-          python3.7 -m venv env
+          python3 -m venv env
           source env/bin/activate
           pip install -r scripts/requirements.txt
           python3 scripts/deploy_dashboard.py -n CurlPerformance -f ./inputs/${{ env.accountid }}-${{ env.region }}.json -r ${{ env.region }}
