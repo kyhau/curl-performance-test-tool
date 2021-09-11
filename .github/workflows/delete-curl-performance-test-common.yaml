@@ -1,4 +1,4 @@
-name: delete-curl-performance-test-common
+name: delete-common-stacks
 
 on:
   workflow_dispatch:

@@ -1,0 +1,25 @@
+name: deploy-main-stacks-branch
+
+on:
+  push:
+    branches-ignore:
+      - master
+    paths:
+      - .github/workflows/deploy-curl-performance-test-branch.yaml
+      - cloudformation/**
+      - lambda/**
+      - scripts/**
+
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: Run yamllint
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run yamllint
+        run: yamllint -c ./.github/linters/.yaml-lint.yaml .github/ cloudformation/
