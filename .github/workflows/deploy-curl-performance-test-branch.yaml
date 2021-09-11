@@ -81,7 +81,7 @@ jobs:
           no-fail-on-empty-changeset: 1
           parameter-overrides: >-
             BucketName=${{ steps.Bucket.outputs.name }},
-            NotificationURL=
+            NotificationEndpoint=
           template: ./cloudformation/curl-performance-test-common.yaml
 
       - name: Upload URL lists to S3
