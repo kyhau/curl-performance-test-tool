@@ -22,15 +22,18 @@ Parameters:
   SubnetId1:
     Description: VPC subnet ID (Required if VpcId specified)
     Type: AWS::EC2::Subnet::Id
+    Default: ""
   SubnetId2:
     Description: VPC subnet ID (Required if VpcId specified)
     Type: AWS::EC2::Subnet::Id
+    Default: ""
   VpcId:
     Description: VPC ID (Optional)
     Type: AWS::EC2::VPC::Id
+    Default: ""
 
 Conditions:
-  VpcModeEnabled: !Not [!Equals [!Ref VpcId, '']]
+  VpcModeEnabled: !Not [!Equals [!Ref VpcId, ""]]
 
 Resources:
   CurlPerformanceTestLogGroup:
