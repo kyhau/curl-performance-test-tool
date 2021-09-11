@@ -1,31 +1,21 @@
 name: deploy-curl-performance-test
 
 on:
-  workflow_dispatch:
-    inputs:
-      accountid:
-        description: 'ID of the AWS account to deploy into'
-        required: true
-      region:
-        description: 'Target deployment region'
-        required: true
-        default: 'ap-southeast-2'
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/deploy-curl-performance-test.yaml
+      - cloudformation/**
+      - lambda/**
+      - scripts/**
+
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  echo-parameters:
-    name: parameters
-    runs-on: ubuntu-20.04
-    continue-on-error: false
-    steps:
-      - name: accountid ${{ github.event.inputs.accountid }}
-        run: echo
-      - name: region ${{ github.event.inputs.region }}
-        run: echo
-
   lint:
     name: Run yamllint
     runs-on: ubuntu-20.04
@@ -37,77 +27,101 @@ jobs:
   deploy-curl-performance-test:
     name: Deploy curl performance test
     needs: [lint]
-    runs-on: [self-hosted, linux, python3]
+    runs-on: ubuntu-20.04
+    environment:
+      name: production
     env:
-      AWS_REGION: ap-southeast-2
-      AWS_ROLE_SESSION_NAME: GitHubActions
+      python-version: 3.8
       region: ap-southeast-2
+    strategy:
+      matrix:
+        account: [K_AWS_01]
 
     steps:
       - uses: actions/checkout@v2
 
-      - id: VpcInfo
-        run: |
-          if [[ "${{ github.event.inputs.accountid }}" == "123456789012" ]]
-          then
-            echo "::set-output name=vpcid::vpc-11111111"
-            echo "::set-output name=subnetid1::subnet-11111111"
-            echo "::set-output name=subnetid2::subnet-11111111"
-          else
-            echo "Error: ${{ github.event.inputs.accountid }} VPC info not found"
-            exit 1
-          fi
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.python-version }}
 
       - uses: aws-actions/configure-aws-credentials@v1
+        env:
+          AWS_ACCESS_KEY_ID_NAME: ${{ matrix.account }}_ACCESS_KEY_ID
+          AWS_SECRET_ACCESS_KEY_NAME: ${{ matrix.account }}_SECRET_ACCESS_KEY
+          AWS_DEFAULT_REGION: ${{ env.region }}
         with:
-          aws-region: ${{ env.region }}
-          role-duration-seconds: 3600
-          role-skip-session-tagging: true
-          role-to-assume: arn:aws:iam::${{ env.accountid }}:role/k-ci-deploy
+          aws-access-key-id: ${{ secrets[env.AWS_ACCESS_KEY_ID_NAME] }}
+          aws-secret-access-key: ${{ secrets[env.AWS_SECRET_ACCESS_KEY_NAME] }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
-      - name: Deploy curl-performance-test-common stack to ${{ env.accountid }}
+      - run: echo "accountid=$(aws sts get-caller-identity | jq -r .Account)" >> $GITHUB_ENV
+
+      - id: Bucket
+        env:
+          bucket-suffix: ${{ secrets.BUCKET_SUFFIX }}
+        run: |
+          echo "::set-output name=name::curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}"
+
+      # Note: If deploying the Lambda Function in VPC
+      # - id: VpcInfo
+      #   run: |
+      #     if [[ "${{ env.accountid }}" == "123456789012" ]]
+      #     then
+      #       echo "::set-output name=vpcid::vpc-11111111"
+      #       echo "::set-output name=subnetid1::subnet-11111111"
+      #       echo "::set-output name=subnetid2::subnet-11111111"
+      #     else
+      #       echo "Error: ${{ env.accountid }} VPC info not found"
+      #       exit 1
+      #     fi
+
+      - name: Deploy curl-performance-test-common stack to ${{ matrix.account }}
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
           capabilities: CAPABILITY_NAMED_IAM
           name: curl-performance-test-common
           no-fail-on-empty-changeset: 1
           parameter-overrides: >-
-            NotificationURL=
+            BucketName=${{ steps.Bucket.outputs.name }},
+            NotificationEndpoint=
           template: ./cloudformation/curl-performance-test-common.yaml
 
       - name: Upload URL lists to S3
         run: |
-          BUCKET_NAME=curl-performance-test-common-code-${{ env.accountid }}-${{ env.region }}
-          aws s3 cp --region $AWS_REGION ./inputs/${{ env.accountid }}-${{ env.region }}.json s3://$BUCKET_NAME/inputs/
+          cp ./inputs/123456789012-${{ env.region }}.json ./inputs/${{ env.accountid }}-${{ env.region }}.json
+          aws s3 cp ./inputs/${{ env.accountid }}-${{ env.region }}.json s3://${{ steps.Bucket.outputs.name }}/inputs/ --region ${{ env.region }}
 
       - name: Package and upload Lambda Function
         id: LambdaPackage
         run: |
-          BUCKET_NAME=curl-performance-test-common-code-${{ env.accountid }}-${{ env.region }}
           zip -j curl-performance-test-$(git rev-parse --short HEAD).zip ./lambda/curl_performance_test.py
-          aws s3 cp --region $AWS_REGION curl-performance-test-$(git rev-parse --short HEAD).zip s3://$BUCKET_NAME/
+          aws s3 cp curl-performance-test-$(git rev-parse --short HEAD).zip s3://${{ steps.Bucket.outputs.name }}/ --region ${{ env.region }}
           echo "::set-output name=S3Key::curl-performance-test-$(git rev-parse --short HEAD).zip"
 
-      - name: Deploy curl-performance-test-main stack to ${{ env.accountid }}
+      - name: Deploy curl-performance-test-main stack to ${{ matrix.account }}
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
           name: curl-performance-test-main
           capabilities: CAPABILITY_NAMED_IAM
           no-fail-on-empty-changeset: 1
           parameter-overrides: >-
-            ArtifactsBucketName=curl-performance-test-common-code-${{ env.accountid }}-${{ env.region }},
+            ArtifactsBucketName=${{ steps.Bucket.outputs.name }},
             CloudWatchCustomMetricNamespace=CurlPerformance,
             LambdaFunctionName=curl-performance-test,
             LambdaPackageS3Key=${{ steps.LambdaPackage.outputs.S3Key }},
-            ScheduleExpression=rate(15 minutes),
-            SubnetId1=${{ steps.VpcInfo.outputs.subnetid1 }},
-            SubnetId2=${{ steps.VpcInfo.outputs.subnetid2 }},
-            VpcId=${{ steps.VpcInfo.outputs.vpcid }}
+            ScheduleExpression=rate(1 hour),
+            SubnetId1=,
+            SubnetId2=,
+            VpcId=
+          # Note: Enable the following if running the lambda in VPC
+          # SubnetId1=${{ steps.VpcInfo.outputs.subnetid1 }},
+          # SubnetId2=${{ steps.VpcInfo.outputs.subnetid2 }},
+          # VpcId=${{ steps.VpcInfo.outputs.vpcid }}
           template: ./cloudformation/curl-performance-test-main.yaml
 
-      - name: Deploy CloudWatch Dashboard
+      - name: Deploy CloudWatch Dashboard CurlPerformance to ${{ matrix.account }}
         run: |
-          python3.8 -m venv env
+          python3 -m venv env
           source env/bin/activate
           pip install -r scripts/requirements.txt
           python3 scripts/deploy_dashboard.py -n CurlPerformance -f ./inputs/${{ env.accountid }}-${{ env.region }}.json -r ${{ env.region }}

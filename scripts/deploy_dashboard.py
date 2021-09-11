@@ -4,6 +4,7 @@ Generate ande deploy a CloudWatch Dashboard dynamically
 import json
 import logging
 
+import boto3
 import click
 from boto3.session import Session
 
@@ -77,7 +78,7 @@ def generate_dashboard_body(dimension_ids, region, metric_namespace):
 @click.option("--dashboard-name", "-n", required=True, help="The name of the dashboard.")
 @click.option("--input-file", "-f", required=True, help="URLs input file (json).")
 @click.option("--metric-namespace", "-m", default="CurlPerformance", show_default=True, help="The name of the Metric Namespace.")
-@click.option("--profile", "-p", default="default", show_default=True, help="AWS profile name.")
+@click.option("--profile", "-p", help="AWS profile name.")
 @click.option("--region", "-r", required=True, help="AWS Region. All dashboards in your account are global, not region-specific.")
 def main(dashboard_name, input_file, metric_namespace, profile, region):
 
@@ -85,7 +86,12 @@ def main(dashboard_name, input_file, metric_namespace, profile, region):
 
     body = generate_dashboard_body(dimension_ids, region, metric_namespace)
 
-    resp = Session(profile_name=profile).client("cloudwatch").put_dashboard(
+    if profile:
+        client = Session(profile_name=profile).client("cloudwatch")
+    else:
+        client = boto3.client("cloudwatch")
+
+    resp = client.put_dashboard(
         DashboardName=dashboard_name,
         DashboardBody=json.dumps(body)
     )

@@ -3,13 +3,9 @@ name: delete-curl-performance-test
 on:
   workflow_dispatch:
     inputs:
-      accountid:
-        description: 'ID of the AWS account to deploy into'
+      account:
+        description: "Alias of the AWS account to be applied to"
         required: true
-      region:
-        description: 'Target deployment region'
-        required: true
-        default: 'ap-southeast-2'
 
 defaults:
   run:
@@ -21,28 +17,31 @@ jobs:
     runs-on: ubuntu-20.04
     continue-on-error: false
     steps:
-      - name: accountid ${{ github.event.inputs.accountid }}
-        run: echo
-      - name: region ${{ github.event.inputs.region }}
+      - name: account ${{ github.event.inputs.account }}
         run: echo
 
   delete-curl-performance-test:
-    name: Delete curl-performance-test stack
-    runs-on: [self-hosted, linux, python3]
+    name: Delete curl-performance-test
+    runs-on: ubuntu-20.04
+    environment:
+      name: production
     env:
-      AWS_REGION: ap-southeast-2
-      AWS_ROLE_SESSION_NAME: GitHubActions
-      accountid: ${{ github.event.inputs.accountid }}
-      region: ${{ github.event.inputs.region }}
+      region: ap-southeast-2
     steps:
       - uses: actions/checkout@v2
 
       - uses: aws-actions/configure-aws-credentials@v1
+        env:
+          AWS_ACCESS_KEY_ID_NAME: ${{ github.event.inputs.account }}_ACCESS_KEY_ID
+          AWS_SECRET_ACCESS_KEY_NAME: ${{ github.event.inputs.account }}_SECRET_ACCESS_KEY
+          AWS_DEFAULT_REGION: ${{ env.region }}
         with:
-          aws-region: ${{ env.region }}
-          role-duration-seconds: 3600
-          role-skip-session-tagging: true
-          role-to-assume: arn:aws:iam::${{ env.accountid }}:role/k-ci-deploy
+          aws-access-key-id: ${{ secrets[env.AWS_ACCESS_KEY_ID_NAME] }}
+          aws-secret-access-key: ${{ secrets[env.AWS_SECRET_ACCESS_KEY_NAME] }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Delete CloudWatch Dashboard CurlPerformance
+        run: aws cloudwatch delete-dashboards --dashboard-names CurlPerformance
 
       - name: Delete curl-performance-test-main stack
         run: aws cloudformation delete-stack --stack-name curl-performance-test-main

@@ -1,47 +1,62 @@
 name: upload-input-files-to-s3
 
-# on:
-#   push:
-#     branches:
-#       - master
-#     paths:
-#       - .github/workflows/upload-input-files-to-s3.yaml
-#       - inputs/*
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/upload-input-files-to-s3.yaml
+      - inputs/*
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  deploy-curl-performance-test:
-    name: Deploy curl performance test
-    runs-on: [self-hosted, linux, python3]
+  upload-input-files-to-s3:
+    name: Upload input files to s3
+    runs-on: ubuntu-20.04
+    environment:
+      name: production
     env:
-      AWS_REGION: ap-southeast-2
-      AWS_ROLE_SESSION_NAME: GitHubActions
+      python-version: 3.8
       region: ap-southeast-2
     strategy:
       matrix:
-        accountid: ["123456789012"]
+        account: [K_AWS_01]
 
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.python-version }}
 
       - uses: aws-actions/configure-aws-credentials@v1
+        env:
+          AWS_ACCESS_KEY_ID_NAME: ${{ matrix.account }}_ACCESS_KEY_ID
+          AWS_SECRET_ACCESS_KEY_NAME: ${{ matrix.account }}_SECRET_ACCESS_KEY
+          AWS_DEFAULT_REGION: ${{ env.region }}
         with:
-          aws-region: ${{ env.region }}
-          role-duration-seconds: 3600
-          role-skip-session-tagging: true
-          role-to-assume: arn:aws:iam::${{ env.accountid }}:role/k-ci-deploy
+          aws-access-key-id: ${{ secrets[env.AWS_ACCESS_KEY_ID_NAME] }}
+          aws-secret-access-key: ${{ secrets[env.AWS_SECRET_ACCESS_KEY_NAME] }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - run: echo "accountid=$(aws sts get-caller-identity | jq -r .Account)" >> $GITHUB_ENV
+
+      - id: Bucket
+        env:
+          bucket-suffix: ${{ secrets.BUCKET_SUFFIX }}
+        run: |
+          echo "::set-output name=name::curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}"
 
       - name: Upload URL lists to S3
         run: |
-          BUCKET_NAME=curl-performance-test-common-code-${{ env.accountid }}-${{ env.region }}
-          aws s3 cp --region ${{ env.region }} ./inputs/${{ env.accountid }}-${{ env.region }}.json s3://$BUCKET_NAME/inputs/
+          cp ./inputs/123456789012-${{ env.region }}.json ./inputs/${{ env.accountid }}-${{ env.region }}.json
+          aws s3 cp ./inputs/${{ env.accountid }}-${{ env.region }}.json s3://${{ steps.Bucket.outputs.name }}/inputs/ --region ${{ env.region }}
 
-      - name: Deploy CloudWatch Dashboard
+      - name: Deploy CloudWatch Dashboard CurlPerformance
         run: |
-          python3.8 -m venv env
+          python3 -m venv env
           source env/bin/activate
           pip install -r scripts/requirements.txt
           python3 scripts/deploy_dashboard.py -n CurlPerformance -f ./inputs/${{ env.accountid }}-${{ env.region }}.json -r ${{ env.region }}
