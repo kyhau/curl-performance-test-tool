@@ -1,11 +1,11 @@
-name: deploy-curl-performance-test-master
+name: deploy-curl-performance-test
 
 on:
   push:
     branches:
       - master
     paths:
-      - .github/workflows/deploy-curl-performance-test-master.yaml
+      - .github/workflows/deploy-curl-performance-test.yaml
       - cloudformation/**
       - lambda/**
       - scripts/**
