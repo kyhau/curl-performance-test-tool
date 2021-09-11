@@ -1,4 +1,4 @@
-name: deploy-curl-performance-test-branch
+name: deploy-main-stacks-branch
 
 on:
   push:
