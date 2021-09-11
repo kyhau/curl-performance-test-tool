@@ -58,7 +58,7 @@ jobs:
         env:
           bucket-suffix: ${{ secrets.BUCKET_SUFFIX }}
         run: |
-          echo "::set-output name=name::curl-performance-test-common-code-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}"
+          echo "::set-output name=name::curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}"
 
       # Note: If deploying the Lambda Function in VPC
       # - id: VpcInfo
