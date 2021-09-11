@@ -107,7 +107,7 @@ jobs:
             CloudWatchCustomMetricNamespace=CurlPerformance,
             LambdaFunctionName=curl-performance-test,
             LambdaPackageS3Key=${{ steps.LambdaPackage.outputs.S3Key }},
-            ScheduleExpression=rate(0 minute),
+            ScheduleExpression=rate(1 hour),
             SubnetId1=,
             SubnetId2=,
             VpcId=
