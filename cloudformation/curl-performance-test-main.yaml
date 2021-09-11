@@ -33,9 +33,6 @@ Parameters:
 Conditions:
   VpcModeEnabled: !Not [!Equals [!Ref VpcId, ""]]
 
-Conditions:
-  VpcModeEnabled: !Not [!Equals [!Ref VpcId, '']]
-
 Resources:
   CurlPerformanceTestLogGroup:
     Type: AWS::Logs::LogGroup
