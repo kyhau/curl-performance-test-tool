@@ -21,15 +21,13 @@ Parameters:
     Default: rate(15 minutes)
   SubnetId1:
     Description: VPC subnet ID (Required if VpcId specified)
-    Type: AWS::EC2::Subnet::Id
-    Default: ""
+    Type: String
   SubnetId2:
     Description: VPC subnet ID (Required if VpcId specified)
-    Type: AWS::EC2::Subnet::Id
-    Default: ""
+    Type: String
   VpcId:
     Description: VPC ID (Optional)
-    Type: AWS::EC2::VPC::Id
+    Type: String
     Default: ""
 
 Conditions:
