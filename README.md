@@ -1,5 +1,7 @@
 # curl-performance-test-tool
 
+[![githubactions](https://github.com/kyhau/curl-performance-test-tool/workflows/deploy-main-stacks/badge.svg)](https://github.com/kyhau/curl-performance-test-tool/actions)
+
 A simple tool to benchmark http latency with `curl`.
 
 For details of the timings see [Cheat Sheet on Curl Performance Metrics: how to benchmark server latency with curl](https://speedtestdemon.com/a-guide-to-curls-performance-metrics-how-to-analyze-a-speed-test-result/).

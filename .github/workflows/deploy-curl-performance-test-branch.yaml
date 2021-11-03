@@ -3,7 +3,7 @@ name: deploy-main-stacks-branch
 on:
   push:
     branches-ignore:
-      - master
+      - main
     paths:
       - .github/workflows/deploy-curl-performance-test-branch.yaml
       - cloudformation/**
