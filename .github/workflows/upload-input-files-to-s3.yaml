@@ -3,7 +3,7 @@ name: upload-input-files-to-s3
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - .github/workflows/upload-input-files-to-s3.yaml
       - inputs/*
