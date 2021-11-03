@@ -19,7 +19,7 @@ The [deploy-curl-performance-test-master](https://github.com/kyhau/curl-performa
     8. Failed (unit: None)
 - Produce a CloudWatch Dashboard named `CurlPerformance`.
 
-![CloudWatchDashboard-01](doc/CloudWatchDashboard-01.png)
+![CloudWatchDashboard-01](docs/CloudWatchDashboard-01.png)
 
 ### Specifying URLs to be tested
 
