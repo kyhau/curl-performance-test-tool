@@ -15,7 +15,7 @@ defaults:
 jobs:
   upload-input-files-to-s3:
     name: Upload input files to s3
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     environment:
       name: production
     env:
@@ -47,7 +47,7 @@ jobs:
         env:
           bucket-suffix: ${{ secrets.BUCKET_SUFFIX }}
         run: |
-          echo "::set-output name=name::curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}"
+          echo "name=curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}" >> $GITHUB_OUTPUT
 
       - name: Upload URL lists to S3
         run: |
