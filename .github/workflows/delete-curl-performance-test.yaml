@@ -14,7 +14,7 @@ defaults:
 jobs:
   echo-parameters:
     name: parameters
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     continue-on-error: false
     steps:
       - name: account ${{ github.event.inputs.account }}
@@ -22,7 +22,7 @@ jobs:
 
   delete-curl-performance-test:
     name: Delete curl-performance-test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     environment:
       name: production
     env:

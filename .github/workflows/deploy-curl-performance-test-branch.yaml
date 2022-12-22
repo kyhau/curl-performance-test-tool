@@ -10,7 +10,6 @@ on:
       - lambda/**
       - scripts/**
 
-
 defaults:
   run:
     shell: bash
@@ -18,7 +17,7 @@ defaults:
 jobs:
   lint:
     name: Run yamllint
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Run yamllint

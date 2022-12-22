@@ -10,7 +10,6 @@ on:
       - lambda/**
       - scripts/**
 
-
 defaults:
   run:
     shell: bash
@@ -18,7 +17,7 @@ defaults:
 jobs:
   lint:
     name: Run yamllint
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Run yamllint
@@ -27,7 +26,7 @@ jobs:
   deploy-curl-performance-test:
     name: Deploy curl performance test
     needs: [lint]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     environment:
       name: production
     env:
@@ -60,16 +59,16 @@ jobs:
         env:
           bucket-suffix: ${{ secrets.BUCKET_SUFFIX }}
         run: |
-          echo "::set-output name=name::curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}"
+          echo "name=curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}" >> $GITHUB_OUTPUT
 
       # Note: If deploying the Lambda Function in VPC
       # - id: VpcInfo
       #   run: |
       #     if [[ "${{ env.accountid }}" == "123456789012" ]]
       #     then
-      #       echo "::set-output name=vpcid::vpc-11111111"
-      #       echo "::set-output name=subnetid1::subnet-11111111"
-      #       echo "::set-output name=subnetid2::subnet-11111111"
+      #       echo "vpcid=vpc-11111111" >> $GITHUB_OUTPUT
+      #       echo "subnetid1=subnet-11111111" >> $GITHUB_OUTPUT
+      #       echo "subnetid2=subnet-11111111" >> $GITHUB_OUTPUT
       #     else
       #       echo "Error: ${{ env.accountid }} VPC info not found"
       #       exit 1
@@ -96,7 +95,7 @@ jobs:
         run: |
           zip -j curl-performance-test-$(git rev-parse --short HEAD).zip ./lambda/curl_performance_test.py
           aws s3 cp curl-performance-test-$(git rev-parse --short HEAD).zip s3://${{ steps.Bucket.outputs.name }}/ --region ${{ env.region }}
-          echo "::set-output name=S3Key::curl-performance-test-$(git rev-parse --short HEAD).zip"
+          echo "S3Key=curl-performance-test-$(git rev-parse --short HEAD).zip" >> $GITHUB_OUTPUT
 
       - name: Deploy curl-performance-test-main stack to ${{ matrix.account }}
         uses: aws-actions/aws-cloudformation-github-deploy@v1

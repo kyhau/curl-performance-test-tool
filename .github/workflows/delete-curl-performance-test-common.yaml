@@ -14,7 +14,7 @@ defaults:
 jobs:
   echo-parameters:
     name: parameters
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     continue-on-error: false
     steps:
       - name: account ${{ github.event.inputs.account }}
@@ -22,7 +22,7 @@ jobs:
 
   delete-curl-performance-test-common:
     name: Delete curl-performance-test-common
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     environment:
       name: production
     env:
@@ -46,7 +46,7 @@ jobs:
         env:
           bucket-suffix: ${{ secrets.BUCKET_SUFFIX }}
         run: |
-          echo "::set-output name=name::curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}"
+          echo "name=curl-performance-test-${{ env.accountid }}-${{ env.region }}-${{ env.bucket-suffix }}" >> $GITHUB_OUTPUT
 
       - name: Empty the S3 bucket before deletion
         run: aws s3 rm s3://${{ steps.Bucket.outputs.name }} --recursive
