@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: aws-actions/configure-aws-credentials@v2.1.0
+      - uses: aws-actions/configure-aws-credentials@v2.2.0
         env:
           AWS_ACCESS_KEY_ID_NAME: ${{ matrix.account }}_ACCESS_KEY_ID
           AWS_SECRET_ACCESS_KEY_NAME: ${{ matrix.account }}_SECRET_ACCESS_KEY
