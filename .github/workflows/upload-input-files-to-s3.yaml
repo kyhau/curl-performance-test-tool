@@ -27,11 +27,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.python-version }}
 
-      - uses: aws-actions/configure-aws-credentials@v4.3.1
+      - uses: aws-actions/configure-aws-credentials@v5.0.0
         env:
           AWS_ACCESS_KEY_ID_NAME: ${{ matrix.account }}_ACCESS_KEY_ID
           AWS_SECRET_ACCESS_KEY_NAME: ${{ matrix.account }}_SECRET_ACCESS_KEY
