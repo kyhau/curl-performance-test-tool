@@ -75,7 +75,7 @@ jobs:
       #     fi
 
       - name: Deploy curl-performance-test-common stack to ${{ matrix.account }}
-        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        uses: aws-actions/aws-cloudformation-github-deploy@v2
         with:
           capabilities: CAPABILITY_NAMED_IAM
           name: curl-performance-test-common
@@ -98,7 +98,7 @@ jobs:
           echo "S3Key=curl-performance-test-$(git rev-parse --short HEAD).zip" >> $GITHUB_OUTPUT
 
       - name: Deploy curl-performance-test-main stack to ${{ matrix.account }}
-        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        uses: aws-actions/aws-cloudformation-github-deploy@v2
         with:
           name: curl-performance-test-main
           capabilities: CAPABILITY_NAMED_IAM
