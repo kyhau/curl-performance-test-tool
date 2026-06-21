@@ -28,7 +28,7 @@ jobs:
     env:
       region: ap-southeast-2
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: aws-actions/configure-aws-credentials@v6.2.0
         env:
