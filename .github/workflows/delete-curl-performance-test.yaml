@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: aws-actions/configure-aws-credentials@6.2.2
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
         env:
           AWS_ACCESS_KEY_ID_NAME: ${{ github.event.inputs.account }}_ACCESS_KEY_ID
           AWS_SECRET_ACCESS_KEY_NAME: ${{ github.event.inputs.account }}_SECRET_ACCESS_KEY
