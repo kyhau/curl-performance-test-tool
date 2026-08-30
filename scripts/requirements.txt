@@ -1,2 +1,2 @@
 boto3~=1.43
-click~=8.4
+click~=8.5
